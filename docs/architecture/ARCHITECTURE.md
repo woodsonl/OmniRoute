@@ -299,7 +299,7 @@ Services (business logic):
 - Codex quota fetcher: `open-sse/services/codexQuotaFetcher.ts` — fetches Codex quota for context-relay handoff decisions
 - Cooldown-aware retry: `src/sse/services/cooldownAwareRetry.ts` — per-model cooldown retries with configurable `requestRetry` / `maxRetryIntervalSec`
 - Safe outbound fetch: `src/shared/network/safeOutboundFetch.ts` — guarded provider/model fetch with SSRF guard, private-URL blocking, retry, and timeout
-- Outbound URL guard: `src/shared/network/outboundUrlGuard.ts` — blocks cloud-metadata hosts on provider URLs, and private/localhost ranges too when `OMNIROUTE_ALLOW_LOCAL_PROVIDER_URLS=false`; `OMNIROUTE_ALLOW_PRIVATE_PROVIDER_URLS=true` turns the checks off (modes chosen in `src/shared/network/outboundUrlGuardPolicy.ts`)
+- Outbound URL guard: `src/shared/network/outboundUrlGuard.ts` — blocks cloud-metadata hosts on provider URLs, and private/localhost ranges too when `OMNIROUTE_ALLOW_LOCAL_PROVIDER_URLS=false`; `OMNIROUTE_ALLOW_PRIVATE_PROVIDER_URLS=true` turns the checks off on validation and discovery, and chat dispatch still blocks cloud-metadata hosts (modes chosen in `src/shared/network/outboundUrlGuardPolicy.ts`)
 - Provider request defaults: `open-sse/services/providerRequestDefaults.ts` — provider-level `maxTokens`, `temperature`, `thinkingBudgetTokens` defaults
 - GLM provider constants: `open-sse/config/glmProvider.ts` — shared GLM models, quota URLs, GLMT timeout/defaults
 - Antigravity upstream: `open-sse/config/antigravityUpstream.ts` — base URL and discovery path constants
@@ -1095,7 +1095,7 @@ legacy compatibility. The current runtime contract uses:
 
 ## 6) SSRF / Outbound URL Guard
 
-- `BaseExecutor.assertOutboundUrlAllowed` (`open-sse/executors/base.ts`) uses `src/shared/network/outboundUrlGuard.ts` to block cloud-metadata target URLs (169.254.0.0/16, metadata.google.internal) on chat requests, and private/loopback URLs too when `OMNIROUTE_ALLOW_LOCAL_PROVIDER_URLS=false`. Built-in local providers skip the check.
+- `BaseExecutor.assertOutboundUrlAllowed` (`open-sse/executors/base.ts`) uses `src/shared/network/outboundUrlGuard.ts` to block cloud-metadata target URLs (169.254.0.0/16, metadata.google.internal) on chat requests, even when `OMNIROUTE_ALLOW_PRIVATE_PROVIDER_URLS=true`. It blocks private/loopback URLs too when `OMNIROUTE_ALLOW_LOCAL_PROVIDER_URLS=false` and the private flag is off. It checks the hostname or IP literal as written, before any DNS lookup. Built-in local providers skip the check.
 - Provider model discovery and validation routes use `src/shared/network/safeOutboundFetch.ts` which applies the guard before every outbound request
 - Guard errors surface as `URL_GUARD_BLOCKED` with HTTP 422 and are logged to the compliance audit trail via `providerAudit.ts`
 
