@@ -289,17 +289,17 @@ export function bootstrapEnv({ dataDirOverride, quiet = false } = {}) {
   }
 
   // ── Warn about the initial dashboard password ──────────────────────────────
-  // Next.js loads ./.env after this bootstrap and fills keys that are still unset,
-  // so a password set only in ./.env still reaches the server.
-  const initialPassword =
-    merged.INITIAL_PASSWORD ?? parseEnvFile(join(process.cwd(), ".env")).INITIAL_PASSWORD;
+  // Bootstrap reads process.env, one .env file, and server.env. Next.js can still fill
+  // an unset INITIAL_PASSWORD from its own .env files, so the unset notice hedges.
+  const initialPassword = merged.INITIAL_PASSWORD;
   if (initialPassword === "CHANGEME") {
-    log("⚠️  INITIAL_PASSWORD is the .env.example placeholder 'CHANGEME'. If no dashboard");
-    log("   password is saved yet, CHANGEME becomes the password, and you can sign in with it");
-    log("   only from localhost until you change it in Dashboard → Settings → Security.");
+    log("⚠️  INITIAL_PASSWORD is the .env.example placeholder 'CHANGEME', a publicly known");
+    log("   password. If no dashboard password is saved yet, CHANGEME becomes the password.");
+    log("   Set your own INITIAL_PASSWORD before first boot, or change it right away in");
+    log("   Dashboard → Settings → Security or with `node bin/reset-password.mjs`.");
   } else if (!initialPassword) {
-    log("ℹ️  INITIAL_PASSWORD is not set. If no dashboard password is saved yet, create one in");
-    log("   the dashboard's onboarding wizard.");
+    log("ℹ️  INITIAL_PASSWORD is unset here. Unless a .env file that Next.js loads sets it,");
+    log("   a fresh install asks you to create the dashboard password in the onboarding wizard.");
   } else if (!initialPassword.trim()) {
     log("⚠️  INITIAL_PASSWORD is only whitespace. If no dashboard password is saved yet, that");
     log("   whitespace becomes the password.");

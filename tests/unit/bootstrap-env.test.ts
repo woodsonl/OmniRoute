@@ -8,7 +8,7 @@
 // limitation, not a defect in the code under test: the OmniRoute runtime itself
 // cascades to node:sqlite/sql.js when better-sqlite3 is unavailable. See
 // tests/unit/_helpers/betterSqlite3Availability.ts for a guard helper.
-import test from "node:test";
+import test, { mock } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
@@ -53,18 +53,13 @@ function withTempEnv(fn) {
 }
 
 function captureStderr(fn) {
-  const chunks = [];
-  const originalWrite = process.stderr.write;
-  process.stderr.write = ((chunk, ..._rest) => {
-    chunks.push(String(chunk));
-    return true;
-  }) as typeof process.stderr.write;
+  const write = mock.method(process.stderr, "write", () => true);
   try {
     fn();
   } finally {
-    process.stderr.write = originalWrite;
+    write.mock.restore();
   }
-  return chunks.join("");
+  return write.mock.calls.map((call) => String(call.arguments[0])).join("");
 }
 
 test("bootstrapEnv prefers ~/.omniroute/.env over server.env", () => {
@@ -187,7 +182,7 @@ test("bootstrapEnv does not claim a CHANGEME default when INITIAL_PASSWORD is un
 
     const output = captureStderr(() => bootstrapEnv());
 
-    assert.match(output, /INITIAL_PASSWORD is not set/);
+    assert.match(output, /INITIAL_PASSWORD is unset here/);
     assert.match(output, /onboarding wizard/);
     assert.doesNotMatch(output, /CHANGEME/);
   });
@@ -200,24 +195,24 @@ test("bootstrapEnv warns that the CHANGEME placeholder becomes the password", ()
 
     const output = captureStderr(() => bootstrapEnv());
 
-    assert.match(output, /placeholder 'CHANGEME'/);
-    assert.match(output, /localhost/);
-    assert.doesNotMatch(output, /is not set/);
+    assert.match(output, /placeholder 'CHANGEME', a publicly known/);
+    assert.match(output, /reset-password/);
+    assert.doesNotMatch(output, /is unset here/);
   });
 });
 
-test("bootstrapEnv reads ./.env for the password warning when another .env is preferred", () => {
-  // Next.js loads ./.env after bootstrap, so a CHANGEME set only there still reaches the server.
+test("bootstrapEnv leaves ./.env to Next.js when another .env is preferred", () => {
+  // A directory at ./.env (a Docker bind-mount of a missing file) must not stop startup.
   withTempEnv(({ tempCwd, dataDir }) => {
     process.env.DATA_DIR = dataDir;
     fs.mkdirSync(dataDir, { recursive: true });
     fs.writeFileSync(path.join(dataDir, ".env"), "JWT_SECRET=jwt-from-dot-env\n", "utf8");
-    fs.writeFileSync(path.join(tempCwd, ".env"), "INITIAL_PASSWORD=CHANGEME\n", "utf8");
+    fs.mkdirSync(path.join(tempCwd, ".env"));
 
     const output = captureStderr(() => bootstrapEnv());
 
-    assert.match(output, /placeholder 'CHANGEME'/);
-    assert.doesNotMatch(output, /is not set/);
+    assert.match(output, /INITIAL_PASSWORD is unset here/);
+    assert.match(output, /Next\.js/);
   });
 });
 
@@ -229,7 +224,7 @@ test("bootstrapEnv warns that a whitespace-only INITIAL_PASSWORD becomes the pas
     const output = captureStderr(() => bootstrapEnv());
 
     assert.match(output, /only whitespace/);
-    assert.doesNotMatch(output, /CHANGEME|is not set/);
+    assert.doesNotMatch(output, /CHANGEME|is unset here/);
   });
 });
 

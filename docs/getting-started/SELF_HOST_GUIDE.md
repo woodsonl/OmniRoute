@@ -67,9 +67,9 @@ APP_BIND_HOST=127.0.0.1       # keep loopback; see "Exposing" only if needed
 
 `REQUIRE_API_KEY=true` makes every `/v1` request and the dashboard require an
 API key / login. On first visit you create the login password in the dashboard's
-onboarding wizard. Docker port-forwarding makes your browser look non-local to the
-container, so the wizard asks for a one-time bootstrap token that the container
-prints to its log:
+onboarding wizard; skipping that step turns dashboard login off. Docker
+port-forwarding makes your browser look non-local to the container, so the wizard
+asks for a one-time bootstrap token that the container prints to its log:
 
 ```bash
 docker logs omniroute | grep BOOTSTRAP
@@ -309,7 +309,7 @@ It is a **pure local self-host** carrier — the simplest thing that makes the
 Before you expose beyond loopback:
 
 - [ ] `REQUIRE_API_KEY=true` in `.env`
-- [ ] `INITIAL_PASSWORD` rotated to a strong, unique value
+- [ ] Dashboard login password set in the onboarding wizard to a strong, unique value
 - [ ] `APP_BIND_HOST` left at `127.0.0.1` _unless_ behind an auth-enforcing proxy
 - [ ] TLS terminated by Caddy/Traefik/Cloudflare in front (never plain HTTP on WAN)
 - [ ] Redis not published to the host (the self-host compose already enforces this)

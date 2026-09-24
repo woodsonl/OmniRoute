@@ -514,7 +514,8 @@ POST /v1/music/generations  { "model": "kie/suno-v4.0",   "prompt": "..." }
 > host — a LAN box or Tailscale peer — are eligible only when the operator enables the
 > `RERANK_REMOTE_PROVIDER_NODES` feature flag **and** the node's base URL passes the provider
 > outbound URL policy (`OMNIROUTE_ALLOW_LOCAL_PROVIDER_URLS` / `OMNIROUTE_ALLOW_PRIVATE_PROVIDER_URLS`);
-> cloud-metadata hosts are never routed to. The memory engine's rerank step calls this route over
+> cloud-metadata hosts are never routed to unless `OMNIROUTE_ALLOW_PRIVATE_PROVIDER_URLS=true`.
+> The memory engine's rerank step calls this route over
 > loopback, so the same rule governs `rerankProviderModel` in the Memory settings.
 >
 > **Local server shapes:** the node is called at `<base>/v1/rerank` and, on 404, at `<base>/rerank`

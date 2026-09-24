@@ -155,9 +155,9 @@ The current project does not set `INITIAL_PASSWORD` because this deployment does
 If it is not set:
 
 - You create the dashboard password in the onboarding wizard on first visit
-- Fly's proxy reaches the app from a non-loopback address, so the wizard asks for a one-time bootstrap token that the app prints to its log: `flyctl logs --no-tail -a omniroute | grep BOOTSTRAP`
+- Fly's proxy reaches the app from a non-loopback address, so the wizard asks for a one-time bootstrap token that the app prints to its log: `flyctl logs --no-tail -a omniroute | grep BOOTSTRAP`. If that line has scrolled out of the log, restart the app and submit the wizard again to print a new token
 
-If you want to initialize the backend password unattended, you can add it later:
+To set the password unattended instead, add it before the first dashboard visit (once a password is saved, `INITIAL_PASSWORD` is ignored):
 
 - `INITIAL_PASSWORD`
 
@@ -255,7 +255,7 @@ Notes:
 
 - `OMNIROUTE_WS_BRIDGE_SECRET` is required in production; missing it will break the WebSocket bridge handshake
 
-If you also want to set an initial password:
+If you also want to set an initial password, set it before the first dashboard visit:
 
 ```powershell
 flyctl secrets set INITIAL_PASSWORD=your-strong-password -a omniroute
@@ -453,7 +453,7 @@ Verify both of the following:
 
 ### 12.5 Can It Run Without `INITIAL_PASSWORD`?
 
-Yes. Without `INITIAL_PASSWORD`, you create the dashboard password in the onboarding wizard on first visit (section 5.2 covers the one-time bootstrap token).
+Yes. With `INITIAL_PASSWORD` unset, you create the dashboard password in the onboarding wizard on first visit (section 5.2 covers the one-time bootstrap token).
 
 ---
 
