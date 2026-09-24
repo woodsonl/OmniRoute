@@ -290,11 +290,9 @@ export function bootstrapEnv({ dataDirOverride, quiet = false } = {}) {
 
   // ── Warn about the initial dashboard password ──────────────────────────────
   // Next.js loads ./.env after this bootstrap and fills keys that are still unset,
-  // so check ./.env too when the .env read above was a different file.
-  const cwdEnvPath = join(process.cwd(), ".env");
+  // so a password set only in ./.env still reaches the server.
   const initialPassword =
-    merged.INITIAL_PASSWORD ??
-    (preferredEnvPath === cwdEnvPath ? undefined : parseEnvFile(cwdEnvPath).INITIAL_PASSWORD);
+    merged.INITIAL_PASSWORD ?? parseEnvFile(join(process.cwd(), ".env")).INITIAL_PASSWORD;
   if (initialPassword === "CHANGEME") {
     log("⚠️  INITIAL_PASSWORD is the .env.example placeholder 'CHANGEME'. If no dashboard");
     log("   password is saved yet, CHANGEME becomes the password, and you can sign in with it");
