@@ -585,7 +585,7 @@ post_install() {
 | Variable                                | Default                              | Description                                                                                               |
 | --------------------------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------- |
 | `JWT_SECRET`                            | `omniroute-default-secret-change-me` | JWT signing secret (**change in production**)                                                             |
-| `INITIAL_PASSWORD`                      | `CHANGEME`                           | First login password                                                                                      |
+| `INITIAL_PASSWORD`                      | _(unset)_                            | First login password. Unset: create it in the onboarding wizard                                           |
 | `DATA_DIR`                              | `~/.omniroute`                       | Data directory (db, usage, logs)                                                                          |
 | `PORT`                                  | framework default                    | Service port (`20128` in examples)                                                                        |
 | `HOSTNAME`                              | framework default                    | Bind host (Docker defaults to `0.0.0.0`)                                                                  |

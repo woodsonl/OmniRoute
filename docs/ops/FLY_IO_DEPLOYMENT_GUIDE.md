@@ -154,8 +154,8 @@ The current project does not set `INITIAL_PASSWORD` because this deployment does
 
 If it is not set:
 
-- The startup log will indicate the default password is `CHANGEME`
-- You should change the login password in system settings as soon as possible after deployment
+- You create the dashboard password in the onboarding wizard on first visit
+- Fly's proxy reaches the app from a non-loopback address, so the wizard asks for a one-time bootstrap token that the app prints to its log: `flyctl logs --no-tail -a omniroute | grep BOOTSTRAP`
 
 If you want to initialize the backend password unattended, you can add it later:
 
@@ -453,7 +453,7 @@ Verify both of the following:
 
 ### 12.5 Can It Run Without `INITIAL_PASSWORD`?
 
-Yes, it can run. It will fall back to the default `CHANGEME` password. It is recommended to change the backend password as soon as possible in production.
+Yes. Without `INITIAL_PASSWORD`, you create the dashboard password in the onboarding wizard on first visit (section 5.2 covers the one-time bootstrap token).
 
 ---
 

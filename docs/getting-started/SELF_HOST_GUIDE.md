@@ -26,7 +26,7 @@ form: a packaged container/binary you run on your own machine in 5 minutes.
 OmniRoute ships a sophisticated `docker-compose.yml` with profiles
 (`base`, `web`, `cli`, `host`, `cliproxyapi`, `memory`, `bifrost`). Each app
 service is profile-gated, so a bare `docker compose up -d` only starts Redis.
-That is correct for power users who pick a profile — but it is *not* a
+That is correct for power users who pick a profile — but it is _not_ a
 5-minute self-host story.
 
 `docker-compose.selfhost.yml` is the KISS overlay: **one command, published
@@ -34,10 +34,10 @@ image, loopback-only, Redis included, no profile choice, no build step.**
 When you outgrow it, graduate to the full
 [DOCKER_GUIDE](../guides/DOCKER_GUIDE.md) profiles.
 
-| Audience | Start here | Graduate to |
-| --- | --- | --- |
-| Self-hoster, single user | this guide | — |
-| Power user, CLI tools / web-cookie providers / sidecars | — | `docker-compose.yml` profiles |
+| Audience                                                | Start here | Graduate to                   |
+| ------------------------------------------------------- | ---------- | ----------------------------- |
+| Self-hoster, single user                                | this guide | —                             |
+| Power user, CLI tools / web-cookie providers / sidecars | —          | `docker-compose.yml` profiles |
 
 ---
 
@@ -66,11 +66,13 @@ APP_BIND_HOST=127.0.0.1       # keep loopback; see "Exposing" only if needed
 ```
 
 `REQUIRE_API_KEY=true` makes every `/v1` request and the dashboard require an
-API key / login. On first boot the dashboard auto-generates an
-`INITIAL_PASSWORD` — read it from the logs:
+API key / login. On first visit you create the login password in the dashboard's
+onboarding wizard. Docker port-forwarding makes your browser look non-local to the
+container, so the wizard asks for a one-time bootstrap token that the container
+prints to its log:
 
 ```bash
-docker logs omniroute | grep -i password
+docker logs omniroute | grep BOOTSTRAP
 ```
 
 The other variables (`DASHBOARD_PORT`, `API_PORT`, `LIVE_WS_PORT`,
@@ -112,11 +114,11 @@ is `healthy` — the acceptance bar from the self-host issue.
 
 ## Ports
 
-| Port | What | Default bind |
-| --- | --- | --- |
-| `20128` | Dashboard + `/v1` LLM proxy (unified entry) | `127.0.0.1` |
-| `20129` | API port (server-to-server) | `127.0.0.1` |
-| `20132` | Live WebSocket (realtime dashboard updates) | `127.0.0.1` |
+| Port    | What                                        | Default bind |
+| ------- | ------------------------------------------- | ------------ |
+| `20128` | Dashboard + `/v1` LLM proxy (unified entry) | `127.0.0.1`  |
+| `20129` | API port (server-to-server)                 | `127.0.0.1`  |
+| `20132` | Live WebSocket (realtime dashboard updates) | `127.0.0.1`  |
 
 All three bind to **loopback only** by default. Redis is **not** published to
 the host at all — the app reaches it over the compose network. This is
@@ -195,8 +197,8 @@ publishes an open `/v1` proxy on every LAN/WAN interface — anyone on the
 network can burn your provider quotas. The order is fixed:
 
 1. Set `REQUIRE_API_KEY=true` in `.env`.
-2. Read `INITIAL_PASSWORD` from the logs and log in.
-3. *Only then* set `APP_BIND_HOST=0.0.0.0` (or put an auth-enforcing reverse
+2. Create the login password in the onboarding wizard (see above) and log in.
+3. _Only then_ set `APP_BIND_HOST=0.0.0.0` (or put an auth-enforcing reverse
    proxy in front and keep loopback).
 
 For TLS / a domain, run Caddy or Traefik in front and leave `APP_BIND_HOST`
@@ -253,6 +255,7 @@ Or, with the full compose, pick a profile:
 - The healthcheck probes `/healthz` and allows a 20 s start period. A slow
   first boot (cold migrations) can take longer — bump `start_period` in the
   compose file if your disk is slow.
+
 </details>
 
 <details>
@@ -307,7 +310,7 @@ Before you expose beyond loopback:
 
 - [ ] `REQUIRE_API_KEY=true` in `.env`
 - [ ] `INITIAL_PASSWORD` rotated to a strong, unique value
-- [ ] `APP_BIND_HOST` left at `127.0.0.1` *unless* behind an auth-enforcing proxy
+- [ ] `APP_BIND_HOST` left at `127.0.0.1` _unless_ behind an auth-enforcing proxy
 - [ ] TLS terminated by Caddy/Traefik/Cloudflare in front (never plain HTTP on WAN)
 - [ ] Redis not published to the host (the self-host compose already enforces this)
 - [ ] `./data` volume backed up regularly (`bin/snapshot-data.sh`)

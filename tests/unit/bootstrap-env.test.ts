@@ -52,6 +52,21 @@ function withTempEnv(fn) {
   }
 }
 
+function captureStderr(fn) {
+  const chunks = [];
+  const originalWrite = process.stderr.write;
+  process.stderr.write = ((chunk, ..._rest) => {
+    chunks.push(String(chunk));
+    return true;
+  }) as typeof process.stderr.write;
+  try {
+    fn();
+  } finally {
+    process.stderr.write = originalWrite;
+  }
+  return chunks.join("");
+}
+
 test("bootstrapEnv prefers ~/.omniroute/.env over server.env", () => {
   withTempEnv(({ dataDir }) => {
     process.env.DATA_DIR = dataDir;
@@ -163,5 +178,68 @@ test("bootstrapEnv ignores blank dataDirOverride values", () => {
     const env = bootstrapEnv({ dataDirOverride: "   ", quiet: true });
 
     assert.equal(env.JWT_SECRET, "jwt-from-dot-env");
+  });
+});
+
+test("bootstrapEnv does not claim a CHANGEME default when INITIAL_PASSWORD is unset", () => {
+  withTempEnv(({ dataDir }) => {
+    process.env.DATA_DIR = dataDir;
+
+    const output = captureStderr(() => bootstrapEnv());
+
+    assert.match(output, /INITIAL_PASSWORD is not set/);
+    assert.match(output, /onboarding wizard/);
+    assert.doesNotMatch(output, /CHANGEME/);
+  });
+});
+
+test("bootstrapEnv warns that the CHANGEME placeholder becomes the password", () => {
+  withTempEnv(({ tempCwd, dataDir }) => {
+    process.env.DATA_DIR = dataDir;
+    fs.writeFileSync(path.join(tempCwd, ".env"), "INITIAL_PASSWORD=CHANGEME\n", "utf8");
+
+    const output = captureStderr(() => bootstrapEnv());
+
+    assert.match(output, /placeholder 'CHANGEME'/);
+    assert.match(output, /localhost/);
+    assert.doesNotMatch(output, /is not set/);
+  });
+});
+
+test("bootstrapEnv reads ./.env for the password warning when another .env is preferred", () => {
+  // Next.js loads ./.env after bootstrap, so a CHANGEME set only there still reaches the server.
+  withTempEnv(({ tempCwd, dataDir }) => {
+    process.env.DATA_DIR = dataDir;
+    fs.mkdirSync(dataDir, { recursive: true });
+    fs.writeFileSync(path.join(dataDir, ".env"), "JWT_SECRET=jwt-from-dot-env\n", "utf8");
+    fs.writeFileSync(path.join(tempCwd, ".env"), "INITIAL_PASSWORD=CHANGEME\n", "utf8");
+
+    const output = captureStderr(() => bootstrapEnv());
+
+    assert.match(output, /placeholder 'CHANGEME'/);
+    assert.doesNotMatch(output, /is not set/);
+  });
+});
+
+test("bootstrapEnv warns that a whitespace-only INITIAL_PASSWORD becomes the password", () => {
+  withTempEnv(({ dataDir }) => {
+    process.env.DATA_DIR = dataDir;
+    process.env.INITIAL_PASSWORD = "   ";
+
+    const output = captureStderr(() => bootstrapEnv());
+
+    assert.match(output, /only whitespace/);
+    assert.doesNotMatch(output, /CHANGEME|is not set/);
+  });
+});
+
+test("bootstrapEnv prints no password warning for a real INITIAL_PASSWORD", () => {
+  withTempEnv(({ dataDir }) => {
+    process.env.DATA_DIR = dataDir;
+    process.env.INITIAL_PASSWORD = "a-strong-unique-password";
+
+    const output = captureStderr(() => bootstrapEnv());
+
+    assert.doesNotMatch(output, /INITIAL_PASSWORD/);
   });
 });

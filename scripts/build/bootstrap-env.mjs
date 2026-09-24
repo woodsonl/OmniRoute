@@ -288,9 +288,23 @@ export function bootstrapEnv({ dataDirOverride, quiet = false } = {}) {
     log("   These providers will not work until configured.");
   }
 
-  // ── Warn about default password ────────────────────────────────────────────
-  if (merged.INITIAL_PASSWORD === "CHANGEME" || !merged.INITIAL_PASSWORD?.trim()) {
-    log("⚠️  INITIAL_PASSWORD is not set — using default 'CHANGEME'. Change it in Settings!");
+  // ── Warn about the initial dashboard password ──────────────────────────────
+  // Next.js loads ./.env after this bootstrap and fills keys that are still unset,
+  // so check ./.env too when the .env read above was a different file.
+  const cwdEnvPath = join(process.cwd(), ".env");
+  const initialPassword =
+    merged.INITIAL_PASSWORD ??
+    (preferredEnvPath === cwdEnvPath ? undefined : parseEnvFile(cwdEnvPath).INITIAL_PASSWORD);
+  if (initialPassword === "CHANGEME") {
+    log("⚠️  INITIAL_PASSWORD is the .env.example placeholder 'CHANGEME'. If no dashboard");
+    log("   password is saved yet, CHANGEME becomes the password, and you can sign in with it");
+    log("   only from localhost until you change it in Dashboard → Settings → Security.");
+  } else if (!initialPassword) {
+    log("ℹ️  INITIAL_PASSWORD is not set. If no dashboard password is saved yet, create one in");
+    log("   the dashboard's onboarding wizard.");
+  } else if (!initialPassword.trim()) {
+    log("⚠️  INITIAL_PASSWORD is only whitespace. If no dashboard password is saved yet, that");
+    log("   whitespace becomes the password.");
   }
 
   // ── Decrypt-probe: verify STORAGE_ENCRYPTION_KEY matches encrypted data (#1622) ─
